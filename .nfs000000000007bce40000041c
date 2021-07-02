@@ -1,0 +1,22 @@
+
+# MR US image registration
+
+Deep learning based Ultrasound to MR image registration software
+
+# Required packages
+
+Anaconda (python 3.7) provides the standard packages. In addition, the following packages are to be installed:
+
+1. opencv: `pip install opencv-python`
+
+    * In python, the module is loaded by `import cv2`
+
+2. SimpleITK: `pip install simpleitk`
+
+3. PyTorch: Refer to the [PyTorch website](https://pytorch.org/)
+
+4. numpy-stl: `pip install numpy-stl`
+
+    * In python, the module is loaded by `import stl`
+
+5. Keras (optional): `pip install keras`
