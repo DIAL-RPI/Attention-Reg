@@ -24,12 +24,12 @@ parser = argparse.ArgumentParser(description=desc)
 parser.add_argument('-i', '--init_mode',
                     type=str,
                     help="mode of training with different transformation matrics",
-                    default='random')
+                    default='load')
 
 parser.add_argument('-l', '--learning_rate',
                     type=float,
                     help='Learning rate',
-                    default=0.001)
+                    default=0.001) #we used 0.001
 
 parser.add_argument('-d', '--device_no',
                     type=int,
@@ -54,8 +54,8 @@ parser.add_argument('-info', '--infomation',
 
 net = 'Generator'
 
-batch_size = 8
-print('batch size = ',batch_size)
+batch_size = 1 #we used 8 or 16 in our experiments
+# print('batch size = ',batch_size)
 current_epoch = 0
 args = parser.parse_args()
 device_no = args.device_no
@@ -123,7 +123,7 @@ class MR_TRUS_4D(Dataset):
         """
 
         case_folder = self.samples[idx]
-        case_id = case_folder[-2:]
+        case_id = case_folder[-1:]
         index = int(case_id)
 
         norm_path = path.normpath(case_folder)
@@ -131,15 +131,17 @@ class MR_TRUS_4D(Dataset):
         status = res[-2]
 
         ''' Load ground-truth registration '''
-        gt_trans_fn = path.join(case_folder, 'gt.npy')
+        gt_trans_fn = path.join('sample', 'gt.txt')
 
-        gt_mat = np.load(gt_trans_fn)
+        gt_mat = np.loadtxt(gt_trans_fn)
         gt_params = load_func.decompose_matrix_degree(gt_mat)
 
         """generated random purtabation"""
-        if self.initialization == 'random':
+        if self.initialization == 'load':
             # To randomly generate the transformation matrices
-            base_mat, params_rand = generate_random_transform(gt_mat)
+            base_mat = np.loadtxt('{}/initialization_{}.txt'.format(case_folder,case_id))
+
+            # base_mat, params_rand = generate_random_transform(gt_mat)
 
             # Although the training set is generated afresh, we recommend using the
             # same validation set from epoch to epoch for stability. However, we cannot upload that much
@@ -167,8 +169,8 @@ class MR_TRUS_4D(Dataset):
 
         """loading MR and US images. In our experiments, we read images from mhd files and resample them with MR segmentation."""
         sample4D = np.zeros((2, 32, 96, 96), dtype=np.ubyte)
-        sample4D[0, :, :, :] = np.load(path.join(case_folder, 'MR.npy'))
-        sample4D[1, :, :, :] = np.load(path.join(case_folder, 'US.npy'))
+        sample4D[0, :, :, :] = np.load(path.join(case_folder, 'MR_{}.npy'.format(case_id)))
+        sample4D[1, :, :, :] = np.load(path.join(case_folder, 'US_{}.npy'.format(case_id)))
         sample4D = scale_volume(sample4D, upper_bound=1, lower_bound=0)
 
         mat_diff = gt_mat.dot(np.linalg.inv(base_mat))
@@ -359,7 +361,7 @@ if __name__ == '__main__':
     dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x],
                                                   batch_size=batch_size,
                                                   shuffle=True,
-                                                  num_workers=1)
+                                                  num_workers=0)
                    for x in ['train', 'val']}
 
     dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
